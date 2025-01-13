@@ -3,9 +3,12 @@ import {
   Roboto_700Bold,
   Roboto_400Regular,
 } from "@expo-google-fonts/roboto";
-import { GluestackUIProvider, Text } from "@gluestack-ui/themed";
+import { GluestackUIProvider } from "@gluestack-ui/themed";
 import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
+import { config } from "./config/gluestack-ui.config";
+import { Loading } from "./src/components/loading";
+import { SignIn } from "@screens/signIn";
+import { SignUp } from "@screens/signUp";
 export default function App() {
   const [fontsLoaded] = useFonts({
     Roboto_700Bold,
@@ -13,24 +16,10 @@ export default function App() {
   });
 
   return (
-    <GluestackUIProvider>
+    <GluestackUIProvider config={config}>
       <StatusBar style="light" backgroundColor="transparent" translucent />
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#333",
-        }}
-      >
-        {fontsLoaded ? (
-          <Text color="white" fontSize={50} fontWeight={600}>
-            App
-          </Text>
-        ) : (
-          <Text>Loading fonts...</Text>
-        )}
-      </View>
+
+      {fontsLoaded ? <SignUp /> : <Loading />}
     </GluestackUIProvider>
   );
 }
