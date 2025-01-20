@@ -7,8 +7,7 @@ import { GluestackUIProvider } from "@gluestack-ui/themed";
 import { StatusBar } from "expo-status-bar";
 import { config } from "./config/gluestack-ui.config";
 import { Loading } from "./src/components/loading";
-import { SignIn } from "@screens/signIn";
-import { SignUp } from "@screens/signUp";
+import { Routes } from "@routes/index";
 export default function App() {
   const [fontsLoaded] = useFonts({
     Roboto_700Bold,
@@ -19,7 +18,7 @@ export default function App() {
     <GluestackUIProvider config={config}>
       <StatusBar style="light" backgroundColor="transparent" translucent />
 
-      {fontsLoaded ? <SignUp /> : <Loading />}
+      {fontsLoaded ? <Routes /> : <Loading />}
     </GluestackUIProvider>
   );
 }

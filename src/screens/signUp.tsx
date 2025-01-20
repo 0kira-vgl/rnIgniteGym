@@ -10,14 +10,17 @@ import BackGroundImg from "@assets/background.png";
 import Logo from "@assets/logo.svg";
 import { Input } from "@components/input";
 import { Button } from "@components/button";
+import { useNavigation } from "@react-navigation/native";
 
 export function SignUp() {
+  const navigation = useNavigation();
+
   return (
     <ScrollView
       contentContainerStyle={{ flexGrow: 1 }}
       showsVerticalScrollIndicator={false}
     >
-      <VStack flex={1} bg="$gray700">
+      <VStack flex={1}>
         <Image
           source={BackGroundImg}
           defaultSource={BackGroundImg}
@@ -59,7 +62,11 @@ export function SignUp() {
               Já tem uma conta?
             </Text>
 
-            <Button title="Fazer Login" variant="outline" />
+            <Button
+              title="Fazer Login"
+              variant="outline"
+              onPress={() => navigation.goBack()}
+            />
           </Center>
         </VStack>
       </VStack>
