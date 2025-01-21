@@ -11,9 +11,19 @@ import Logo from "@assets/logo.svg";
 import { Input } from "@components/input";
 import { Button } from "@components/button";
 import { useNavigation } from "@react-navigation/native";
+import { useState } from "react";
 
 export function SignUp() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+
   const navigation = useNavigation();
+
+  const handleSignUp = () => {
+    console.log(name);
+  };
 
   return (
     <ScrollView
@@ -42,19 +52,27 @@ export function SignUp() {
           <Center gap="$2">
             <Heading color="$gray100">Crie sua conta</Heading>
 
-            <Input placeholder="Nome" />
+            <Input placeholder="Nome" onChangeText={setName} />
 
             <Input
               placeholder="E-mail"
               keyboardType="email-address"
               autoCapitalize="none"
+              onChangeText={setEmail}
             />
             <Input
               placeholder="Senha"
               secureTextEntry // oculta oq é digitado
+              onChangeText={setPassword}
             />
 
-            <Button title="Criar e acessar" />
+            <Input
+              placeholder="Confirme a senha"
+              secureTextEntry
+              onChangeText={setPasswordConfirm}
+            />
+
+            <Button title="Criar e acessar" onPress={handleSignUp} />
           </Center>
 
           <Center flex={1} justifyContent="flex-end" mt="$4">

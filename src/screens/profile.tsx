@@ -1,11 +1,62 @@
-import { Center, Text, VStack, Heading } from "@gluestack-ui/themed";
+import { Center, Text, VStack, Heading, useToast } from "@gluestack-ui/themed";
 import { ScrollView, TouchableOpacity } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import { Input } from "@components/input";
 import { ScreenHeader } from "@components/screenHeader";
 import { UserPhoto } from "@components/userPhoto";
 import { Button } from "@components/button";
+import { useState } from "react";
+import { ToastMessage } from "@components/toastMessage";
 
 export function Profile() {
+  const [userPhoto, setUserPhoto] = useState(
+    "https://github.com/0kira-vgl.png"
+  );
+  const toast = useToast();
+
+  async function handleUserPhotoSelect() {
+    try {
+      const photoSelected = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 1,
+        aspect: [4, 4], // formato da imagem
+        allowsEditing: true, // editar imagem
+      });
+
+      if (photoSelected.canceled) {
+        return;
+      }
+
+      const photoUri = photoSelected.assets[0].uri;
+
+      if (photoUri) {
+        const photoInfo = (await FileSystem.getInfoAsync(photoUri)) as {
+          size: number; // tipando tamanho em bytes
+        };
+
+        if (photoInfo.size && photoInfo.size / 1024 / 1024 > 5) {
+          return toast.show({
+            placement: "top",
+            render: ({ id }) => (
+              <ToastMessage
+                id={id}
+                action="error"
+                title="Imagem muito grande!"
+                description="Essa imagem é muito grande. Escolha uma de até 5MB."
+                onClose={() => toast.close(id)}
+              />
+            ),
+          }); // retorna um toast
+        }
+
+        setUserPhoto(photoUri);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   return (
     <VStack flex={1}>
       <ScreenHeader title="Perfil" />
@@ -13,12 +64,12 @@ export function Profile() {
       <ScrollView contentContainerStyle={{ paddingBottom: 36 }}>
         <Center mt="$6" px="$10">
           <UserPhoto
-            source={{ uri: "https://github.com/0kira-vgl.png" }}
+            source={{ uri: userPhoto }}
             size="xl"
             alt="Foto do Usuário"
           />
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleUserPhotoSelect}>
             <Text
               color="$green500"
               fontFamily="$heading"
