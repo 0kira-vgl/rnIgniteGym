@@ -9,7 +9,7 @@ export function HomeHeader() {
         source={{ uri: "https://github.com/0kira-vgl.png" }}
         w="$16"
         h="$16"
-        alt="Imagem do Usuário"
+        alt="Foto do Usuário"
       />
       <VStack flex={1}>
         <Text color="$gray100" fontSize="$sm">
