@@ -5,6 +5,9 @@ import {
   Text,
   Heading,
   ScrollView,
+  useToast,
+  Toast,
+  ToastTitle,
 } from "@gluestack-ui/themed";
 import BackGroundImg from "@assets/background.png";
 import Logo from "@assets/logo.svg";
@@ -14,6 +17,8 @@ import { useNavigation } from "@react-navigation/native";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { api } from "@services/api";
+import { AppError } from "@utils/appError";
 
 type FormDataProps = {
   name: string;
@@ -40,6 +45,7 @@ const signUpSchema = yup.object({
 });
 
 export function SignUp() {
+  const toast = useToast();
   const {
     control,
     handleSubmit,
@@ -49,9 +55,35 @@ export function SignUp() {
   });
   const navigation = useNavigation();
 
-  const handleSignUp = (data: FormDataProps) => {
-    console.log(data);
-  };
+  async function handleSignUp({ name, email, password }: FormDataProps) {
+    try {
+      // faz uma requisição POST para criar um novo usuário no backend
+      // envia os dados "name", "email" e "password" para o caminho "/users"
+      const response = await api.post("/users", { name, email, password });
+
+      console.log(response.data);
+    } catch (error) {
+      // verifica se o erro é do tipo AppError (erro personalizado)
+      const isAppError = error instanceof AppError;
+
+      // define a mensagem a ser exibida:
+      // - se for AppError, mostra a mensagem específica do erro.
+      // - se não for, mostra uma mensagem genérica de falha.
+      const title = isAppError
+        ? error.message
+        : "Não foi possível criar a conta. Tente novamente mais tarde.";
+
+      // exibe uma notificação (toast) com a mensagem de erro
+      toast.show({
+        placement: "top",
+        render: () => (
+          <Toast backgroundColor="$red500" action="error" variant="outline">
+            <ToastTitle color="$white">{title}</ToastTitle>
+          </Toast>
+        ),
+      });
+    }
+  }
 
   return (
     <ScrollView
