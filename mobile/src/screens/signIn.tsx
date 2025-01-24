@@ -12,9 +12,24 @@ import { Input } from "@components/input";
 import { Button } from "@components/button";
 import { useNavigation } from "@react-navigation/native";
 import { AuthNavigatorRouterProps } from "@routes/auth.routes";
+import { Controller, useForm } from "react-hook-form";
+
+type FormData = {
+  email: string;
+  password: string;
+};
 
 export function SignIn() {
   const navigation = useNavigation<AuthNavigatorRouterProps>();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>();
+
+  function handleSignIn({ email, password }: FormData) {
+    console.log(email, password);
+  }
 
   return (
     <ScrollView
@@ -43,17 +58,38 @@ export function SignIn() {
           <Center gap="$2">
             <Heading color="$gray100">Acesse a conta</Heading>
 
-            <Input
-              placeholder="E-mail"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <Input
-              placeholder="Senha"
-              secureTextEntry // oculta oq é digitado
+            <Controller
+              control={control}
+              name="email"
+              rules={{ required: "Informe o email" }}
+              render={({ field: { onChange } }) => (
+                <Input
+                  placeholder="E-mail"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  onChangeText={onChange}
+                  errorMessage={errors.email?.message}
+                />
+              )}
             />
 
-            <Button title="Acessar" />
+            <Controller
+              control={control}
+              name="password"
+              rules={{ required: "Informe a senha" }}
+              render={({ field: { onChange } }) => (
+                <Input
+                  placeholder="Senha"
+                  secureTextEntry // oculta oq é digitado
+                  onChangeText={onChange}
+                  errorMessage={errors.password?.message}
+                  onSubmitEditing={handleSubmit(handleSignIn)}
+                  returnKeyType="send"
+                />
+              )}
+            />
+
+            <Button title="Acessar" onPress={handleSubmit(handleSignIn)} />
           </Center>
 
           <Center flex={1} justifyContent="flex-end" mt="$4">
