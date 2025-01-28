@@ -2,7 +2,7 @@ import { AppError } from "@utils/appError";
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://192.168.1.15:3333",
+  baseURL: "http://192.168.1.14:3333",
   timeout: 300, // define o tempo máximo de espera por uma resposta
 });
 
