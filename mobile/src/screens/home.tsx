@@ -1,14 +1,25 @@
 import { ExerciseCard } from "@components/exerciseCard";
 import { Group } from "@components/group";
 import { HomeHeader } from "@components/homeHeader";
-import { Heading, HStack, Text, VStack } from "@gluestack-ui/themed";
+import {
+  Heading,
+  HStack,
+  Text,
+  VStack,
+  useToast,
+  Toast,
+  ToastTitle,
+} from "@gluestack-ui/themed";
 import { useNavigation } from "@react-navigation/native";
 import { AppNavigatorRouterProps } from "@routes/app.routes";
-import { useState } from "react";
-import { FlatList, TouchableOpacity } from "react-native";
+import { api } from "@services/api";
+import { AppError } from "@utils/appError";
+import { useEffect, useState } from "react";
+import { FlatList } from "react-native";
 
 export function Home() {
-  const [groups, setGroups] = useState(["Costas", "Peito", "Ombro", "Pernas"]);
+  const toast = useToast();
+  const [groups, setGroups] = useState<string[]>([]);
   const [groupSelected, setGroupSelected] = useState("Costas");
   const [exercises, setExercises] = useState([
     "Puxada frontal",
@@ -19,9 +30,31 @@ export function Home() {
 
   const navigation = useNavigation<AppNavigatorRouterProps>();
 
-  function handleOpenExerciseDetails() {
-    navigation.navigate("exercise");
+  async function fetchGroups() {
+    try {
+      const response = await api.get("/groups");
+      setGroups(response.data);
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+
+      const title = isAppError
+        ? error.message
+        : "Não foi possível carregar os grupos musculares.";
+
+      toast.show({
+        placement: "top",
+        render: () => (
+          <Toast backgroundColor="$red500" action="error" variant="outline">
+            <ToastTitle color="$white">{title}</ToastTitle>
+          </Toast>
+        ),
+      });
+    }
   }
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
   return (
     <VStack flex={1}>
@@ -60,7 +93,7 @@ export function Home() {
           data={exercises}
           keyExtractor={(item) => item}
           renderItem={() => (
-            <ExerciseCard onPress={handleOpenExerciseDetails} />
+            <ExerciseCard onPress={() => navigation.navigate("exercise")} />
           )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 20 }}
