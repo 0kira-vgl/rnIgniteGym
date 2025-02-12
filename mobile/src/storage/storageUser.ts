@@ -15,7 +15,7 @@ async function storageUserGet() {
 }
 
 async function storageUserRemove() {
-  const storage = await AsyncStorage.removeItem(USER_STORAGE);
+  await AsyncStorage.removeItem(USER_STORAGE);
 }
 
 export { storageUserSave, storageUserGet, storageUserRemove };
