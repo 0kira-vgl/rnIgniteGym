@@ -9,8 +9,6 @@ import { Loading } from "@components/loading";
 export function Routes() {
   const { user, isLoadingUserStorageData } = useAuth();
 
-  console.log(user);
-
   const theme = DefaultTheme;
   theme.colors.background = gluestackUIConfig.tokens.colors.gray700;
 

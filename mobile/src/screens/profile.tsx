@@ -53,6 +53,7 @@ export function Profile() {
         setUserPhoto(photoUri);
       }
     } catch (error) {
+      throw error;
       console.log(error);
     }
   }
