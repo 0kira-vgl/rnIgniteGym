@@ -19,7 +19,7 @@ type AppRoutes = {
   exercise: { exerciseId: string };
 };
 
-export type AppNavigatorRouterProps = BottomTabNavigationProp<AppRoutes>;
+export type AppNavigatorRoutesProps = BottomTabNavigationProp<AppRoutes>;
 
 const { Navigator, Screen } = createBottomTabNavigator<AppRoutes>();
 

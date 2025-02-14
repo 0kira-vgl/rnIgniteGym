@@ -13,10 +13,9 @@ import {
   ToastTitle,
 } from "@gluestack-ui/themed";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { AppNavigatorRouterProps } from "@routes/app.routes";
+import { AppNavigatorRoutesProps } from "@routes/app.routes";
 import { api } from "@services/api";
 import { AppError } from "@utils/appError";
-import { isLoaded } from "expo-font";
 import { useCallback, useEffect, useState } from "react";
 import { FlatList } from "react-native";
 
@@ -24,10 +23,10 @@ export function Home() {
   const toast = useToast();
   const [groups, setGroups] = useState<string[]>([]);
   const [exercises, setExercises] = useState<ExerciseDTO[]>([]);
-  const [isLoadind, setIsLoadind] = useState(true);
-  const [groupSelected, setGroupSelected] = useState("Costas");
+  const [isLoading, setIsLoading] = useState(true);
+  const [groupSelected, setGroupSelected] = useState("Antebraço");
 
-  const navigation = useNavigation<AppNavigatorRouterProps>();
+  const navigation = useNavigation<AppNavigatorRoutesProps>();
 
   function handleOpenExerciseDetails(exerciseId: string) {
     navigation.navigate("exercise", { exerciseId });
@@ -56,7 +55,7 @@ export function Home() {
 
   async function fetchExercisesByGroups() {
     try {
-      setIsLoadind(true);
+      setIsLoading(true);
 
       const response = await api.get(
         `/exercises/bygroup/${groupSelected.toLowerCase()}` // converte todos os caracteres de uma string para letras minúsculas
@@ -78,7 +77,7 @@ export function Home() {
         ),
       });
     } finally {
-      setIsLoadind(false);
+      setIsLoading(false);
     }
   }
 
@@ -114,7 +113,7 @@ export function Home() {
         style={{ marginVertical: 40, maxHeight: 44, minHeight: 44 }}
       />
 
-      {isLoadind ? (
+      {isLoading ? (
         <Loading />
       ) : (
         <VStack px="$8" flex={1}>
