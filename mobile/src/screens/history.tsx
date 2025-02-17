@@ -1,20 +1,56 @@
-import { Heading, VStack, Text } from "@gluestack-ui/themed";
+import {
+  Heading,
+  VStack,
+  Text,
+  Toast,
+  ToastTitle,
+  useToast,
+} from "@gluestack-ui/themed";
 import { ScreenHeader } from "@components/screenHeader";
 import { HistoryCard } from "@components/historyCard";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SectionList } from "react-native";
+import { api } from "@services/api";
+import { AppError } from "@utils/appError";
+import { Loading } from "@components/loading";
+import { useFocusEffect } from "@react-navigation/native";
+import { HistoryByDayDTO } from "@dtos/historyByDayDTO";
 
 export function History() {
-  const [exercises, setExercises] = useState([
-    {
-      title: "19.10.24",
-      data: ["Pulley Frente", "Remada Unilateral"],
-    },
-    {
-      title: "19.10.24",
-      data: ["Pulldown"],
-    },
-  ]);
+  const toast = useToast();
+  const [isloading, setIsLoading] = useState(true);
+  const [exercises, setExercises] = useState<HistoryByDayDTO[]>([]);
+
+  async function getItems() {
+    try {
+      setIsLoading(true);
+
+      const response = await api.get("/history");
+      setExercises(response.data);
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError
+        ? error.message
+        : "Não foi possível carregar o histórico.";
+
+      toast.show({
+        placement: "top",
+        render: () => (
+          <Toast backgroundColor="$red500" action="error" variant="outline">
+            <ToastTitle color="$white">{title}</ToastTitle>
+          </Toast>
+        ),
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      getItems();
+    }, [])
+  );
 
   return (
     <VStack flex={1}>
@@ -22,7 +58,7 @@ export function History() {
 
       <SectionList
         sections={exercises}
-        keyExtractor={(item) => item}
+        keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         style={{ paddingHorizontal: 32 }}
         contentContainerStyle={
@@ -33,7 +69,9 @@ export function History() {
             Não há exercícios registrados ainda. {"\n"} Vamos treinar hoje?
           </Text>
         )}
-        renderItem={() => <HistoryCard />}
+        renderItem={({ item }) =>
+          isloading ? <Loading /> : <HistoryCard data={item} />
+        }
         renderSectionHeader={({ section }) => (
           <Heading
             fontFamily="$heading"
