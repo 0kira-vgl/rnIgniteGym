@@ -15,6 +15,7 @@ import {
 // define o formato dos dados que o contexto de autenticação fornecerá
 export type AuthContextDataProps = {
   user: UserDTO; // armazena os dados do usuário autenticado
+  updateUserProfile: (userUpdated: UserDTO) => Promise<void>; // mantem os dados do usuário atualizados
   signIn: (email: string, password: string) => Promise<void>; // função para autenticar o usuário
   signOut: () => Promise<void>; // função para deslogar o usuário
   isLoadingUserStorageData: boolean; // indica se os dados do usuário estão sendo carregados
@@ -89,6 +90,15 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
     }
   }
 
+  async function updateUserProfile(userUpdated: UserDTO) {
+    try {
+      setUser(userUpdated);
+      await storageUserSave(userUpdated);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // função que carrega os dados do usuário do armazenamento local ao iniciar o app
   async function loadUserData() {
     try {
@@ -117,6 +127,7 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
         signIn,
         signOut,
         isLoadingUserStorageData,
+        updateUserProfile,
       }}
     >
       {children}
