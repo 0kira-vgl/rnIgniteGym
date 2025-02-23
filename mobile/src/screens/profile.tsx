@@ -1,4 +1,12 @@
-import { Center, Text, VStack, Heading, useToast } from "@gluestack-ui/themed";
+import {
+  Center,
+  Text,
+  VStack,
+  Heading,
+  useToast,
+  Toast,
+  ToastTitle,
+} from "@gluestack-ui/themed";
 import { ScrollView, TouchableOpacity } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
@@ -12,28 +20,44 @@ import { ToastMessage } from "@components/toastMessage";
 import { Controller, useForm } from "react-hook-form";
 import { useAuth } from "@hooks/useAuth";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { api } from "@services/api";
+import { AppError } from "@utils/appError";
 
 type FormDataProfile = {
   name: string;
-  email?: string;
-  password?: string;
-  old_password?: string;
-  confirm_password?: string;
+  email: string;
+  password?: string | null | undefined;
+  old_password?: string | undefined;
+  confirm_password?: string | null | undefined;
 };
 
 const profileSchema = yup.object({
   name: yup.string().required("Informe seu nome."),
+  email: yup.string().required("Informe seu email.").email("Email inválido"),
+  old_password: yup.string(),
+  password: yup
+    .string()
+    .min(6, "A senha deve ter pelo menos 6 dígitos")
+    .nullable()
+    .transform((value) => (!!value ? value : null)),
+  confirm_password: yup
+    .string()
+    .nullable() // permite valores nulos
+    .transform((value) => (!!value ? value : null)) // se vazio, transforma em null
+    .oneOf([yup.ref("password"), null], "As senhas não coincidem.") // deve ser igual à nova senha
+    .when("password", {
+      is: (Field: any) => Field, // verifica se "password" foi preenchida
+      then: (schema) =>
+        schema
+          .nullable()
+          .required("Confirme sua senha.") // se "password" estiver preenchida, a confirmação se torna obrigatória
+          .transform((value) => (!!value ? value : null)), // transforma em null caso esteja vazia
+    }),
 });
 
-// const profileSchema = yup.object({
-//   name: yup.string().required("Informe seu nome."),
-//   email: yup.string().email("E-mail inválido").required("Informe seu e-mail."),
-//   password: yup.string(),
-//   old_password: yup.string(),
-//   confirm_password: yup.string().oneOf([yup.ref("password")], "As senhas não coincidem"),
-// });
-
 export function Profile() {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const toast = useToast();
   const { user } = useAuth();
   const {
     control,
@@ -50,7 +74,6 @@ export function Profile() {
   const [userPhoto, setUserPhoto] = useState(
     "https://github.com/0kira-vgl.png"
   );
-  const toast = useToast();
 
   async function handleUserPhotoSelect() {
     try {
@@ -95,7 +118,37 @@ export function Profile() {
   }
 
   async function handleProfileUpdate(data: FormDataProfile) {
-    console.log(data);
+    try {
+      setIsUpdating(true);
+      await api.put("/users", data);
+
+      toast.show({
+        placement: "top",
+        render: () => (
+          <Toast backgroundColor="$green700" action="success" variant="outline">
+            <ToastTitle color="$white">
+              Perfil atualizado com sucesso!
+            </ToastTitle>
+          </Toast>
+        ),
+      });
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError
+        ? error.message
+        : "Não foi possível atualizar os dados. Tente novamente mais tarde.";
+
+      toast.show({
+        placement: "top",
+        render: () => (
+          <Toast backgroundColor="$red500" action="error" variant="outline">
+            <ToastTitle color="$white">{title}</ToastTitle>
+          </Toast>
+        ),
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   }
 
   return (
@@ -209,6 +262,7 @@ export function Profile() {
             <Button
               title="Atualizar"
               onPress={handleSubmit(handleProfileUpdate)}
+              isLoading={isUpdating}
             />
           </Center>
         </Center>
