@@ -110,7 +110,35 @@ export function Profile() {
           }); // retorna um toast
         }
 
-        setUserPhoto(photoUri);
+        const fileExtension = photoUri.split(".").pop();
+
+        const photoFile = {
+          name: `${user.name}.${fileExtension}`.toLocaleLowerCase(),
+          uri: photoUri,
+          type: `${photoSelected}/${fileExtension}`,
+        } as any;
+
+        const userPhotoUploadForm = new FormData();
+        userPhotoUploadForm.append("avatar", photoFile);
+
+        await api.patch("/users/avatar", userPhotoUploadForm, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        toast.show({
+          placement: "top",
+          render: () => (
+            <Toast
+              backgroundColor="$green700"
+              action="success"
+              variant="outline"
+            >
+              <ToastTitle color="$white">Foto atualizada!</ToastTitle>
+            </Toast>
+          ),
+        });
       }
     } catch (error) {
       throw error;
