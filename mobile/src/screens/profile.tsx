@@ -22,6 +22,7 @@ import { useAuth } from "@hooks/useAuth";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { api } from "@services/api";
 import { AppError } from "@utils/appError";
+import DefaultAavatarImg from "@assets/userPhotoDefault.png";
 
 type FormDataProfile = {
   name: string;
@@ -71,10 +72,6 @@ export function Profile() {
     resolver: yupResolver(profileSchema),
   });
 
-  const [userPhoto, setUserPhoto] = useState(
-    "https://github.com/0kira-vgl.png"
-  );
-
   async function handleUserPhotoSelect() {
     try {
       const photoSelected = await ImagePicker.launchImageLibraryAsync({
@@ -110,7 +107,7 @@ export function Profile() {
           }); // retorna um toast
         }
 
-        const fileExtension = photoUri.split(".").pop();
+        const fileExtension = photoUri.split(".").pop() || "";
 
         const photoFile = {
           name: `${user.name}.${fileExtension}`.toLocaleLowerCase(),
@@ -121,11 +118,36 @@ export function Profile() {
         const userPhotoUploadForm = new FormData();
         userPhotoUploadForm.append("avatar", photoFile);
 
-        await api.patch("/users/avatar", userPhotoUploadForm, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
+        const avatarUpdatedResponse = await api.patch(
+          "/users/avatar",
+          userPhotoUploadForm,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        const allowedExtensions = ["jpg", "jpeg", "png", "webp", "gif"];
+
+        if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
+          toast.show({
+            placement: "top",
+            render: () => (
+              <Toast
+                backgroundColor="$reed500"
+                action="error"
+                variant="outline"
+              >
+                <ToastTitle color="$white">Formato não suportado!</ToastTitle>
+              </Toast>
+            ),
+          });
+        }
+
+        const userUpdated = user;
+        userUpdated.avatar = avatarUpdatedResponse.data.avatar;
+        updateUserProfile(userUpdated);
 
         toast.show({
           placement: "top",
@@ -191,7 +213,11 @@ export function Profile() {
       <ScrollView contentContainerStyle={{ paddingBottom: 36 }}>
         <Center mt="$6" px="$10">
           <UserPhoto
-            source={{ uri: userPhoto }}
+            source={
+              user.avatar
+                ? { uri: `${api.defaults.baseURL}/avatar/${user.avatar}` }
+                : DefaultAavatarImg
+            }
             size="xl"
             alt="Foto do Usuário"
           />
