@@ -46,12 +46,16 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
   }
 
   // função que salva o usuário e o token no armazenamento local
-  async function storageUserAndTokenSave(userData: UserDTO, token: string) {
+  async function storageUserAndTokenSave(
+    userData: UserDTO,
+    token: string,
+    refresh_token: string
+  ) {
     try {
       setIsLoadingUserStorageData(true); // define o estado de carregamento como verdadeiro
 
       await storageUserSave(userData); // salva os dados do usuário no armazenamento local
-      await storageAuthTokenSave(token); // salva o token no armazenamento local
+      await storageAuthTokenSave({ token, refresh_token }); // salva o token no armazenamento local
     } catch (error) {
       throw error; // lança um erro caso algo dê errado
     } finally {
@@ -60,12 +64,20 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
   }
 
   // função para autenticar o usuário
-  async function signIn(email: string, password: string) {
+  async function signIn(
+    email: string,
+    password: string,
+    refresh_token: string
+  ) {
     try {
       const { data } = await api.post("/sessions", { email, password }); // faz a requisição de login
 
-      if (data.user && data.token) {
-        await storageUserAndTokenSave(data.user, data.token); // salva o usuário e o token no armazenamento local
+      if (data.user && data.token && data.refresh_token) {
+        await storageUserAndTokenSave(
+          data.user,
+          data.token,
+          data.refresh_token
+        ); // salva o usuário e o token no armazenamento local
         userAndTokenUpdate(data.user, data.token); // atualiza o estado do usuário e o cabeçalho da API
       }
     } catch (error) {
@@ -103,7 +115,7 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
   async function loadUserData() {
     try {
       const userLogged = await storageUserGet(); // recupera os dados do usuário do armazenamento local
-      const token = await storageAuthTokenGet(); // recupera o token do armazenamento local
+      const { token } = await storageAuthTokenGet(); // recupera o token do armazenamento local
 
       if (token && userLogged) {
         userAndTokenUpdate(userLogged, token); // atualiza o estado do usuário e o cabeçalho da API
@@ -119,6 +131,14 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
   useEffect(() => {
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    const subscribe = api.registerInterceptTokenManager(signOut);
+
+    return () => {
+      subscribe(); // cancela a subscrição ao interceptorTokensManager quando o componente for desmontado
+    };
+  }, [signOut]);
 
   return (
     <AuthContext.Provider
