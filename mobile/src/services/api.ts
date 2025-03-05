@@ -1,4 +1,7 @@
-import { storageAuthTokenGet } from "@storage/storageAuthToken";
+import {
+  storageAuthTokenGet,
+  storageAuthTokenSave,
+} from "@storage/storageAuthToken";
 import { AppError } from "@utils/appError";
 import axios, { AxiosError, AxiosInstance } from "axios";
 
@@ -6,7 +9,7 @@ type SignOut = () => void;
 
 type PromiseType = {
   onSuccess: (token: string) => void;
-  onFailure: (erro: AxiosError) => void;
+  onFailure: (error: AxiosError) => void;
 };
 
 type APIInstanceProps = AxiosInstance & {
@@ -14,11 +17,11 @@ type APIInstanceProps = AxiosInstance & {
 };
 
 const api = axios.create({
-  baseURL: "http://192.168.1.14:3333",
+  baseURL: "http://192.168.1.9:3333",
   timeout: 300, // define o tempo máximo de espera por uma resposta
 }) as APIInstanceProps;
 
-let failedQueue: Array<PromiseType> = [];
+let failedQueued: Array<PromiseType> = [];
 let isRefreshing = false;
 
 api.registerInterceptTokenManager = (singOut) => {
@@ -41,10 +44,10 @@ api.registerInterceptTokenManager = (singOut) => {
 
           if (isRefreshing) {
             return new Promise((resolve, reject) => {
-              failedQueue.push({
+              failedQueued.push({
                 onSuccess: (token: string) => {
                   originalRequestConfig.headers = {
-                    authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                   };
                   resolve(api(originalRequestConfig));
                 },
@@ -54,8 +57,51 @@ api.registerInterceptTokenManager = (singOut) => {
               });
             });
           }
+
+          isRefreshing = true;
+
+          return new Promise(async (resolve, reject) => {
+            try {
+              const { data } = await api.post("/sessions/refresh-token", {
+                refresh_token,
+              });
+              await storageAuthTokenSave({
+                token: data.token,
+                refresh_token: data.refresh_token,
+              });
+
+              if (originalRequestConfig.data) {
+                originalRequestConfig.data = JSON.parse(
+                  originalRequestConfig.data
+                );
+              }
+
+              originalRequestConfig.headers = {
+                Authorization: `Bearer ${data.token}`,
+              };
+              api.defaults.headers.common[
+                "Authorization"
+              ] = `Bearer ${data.token}`;
+
+              failedQueued.forEach((request) => {
+                request.onSuccess(data.token);
+              });
+
+              resolve(api(originalRequestConfig));
+            } catch (error: any) {
+              console.log(error);
+              failedQueued.forEach((request) => {
+                request.onFailure(error);
+              });
+
+              singOut();
+              reject(error);
+            } finally {
+              isRefreshing = false;
+              failedQueued = [];
+            }
+          });
         }
-        isRefreshing = true;
 
         singOut();
       }
@@ -72,7 +118,5 @@ api.registerInterceptTokenManager = (singOut) => {
     api.interceptors.response.eject(interceptTokenManager);
   };
 };
-
-// intercepta todas as respostas da API (sucesso ou erro)
 
 export { api };
